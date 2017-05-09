@@ -71,7 +71,61 @@ public:
      *  @return         0 on success, negative error code on failure
      */
     virtual nsapi_error_t gethostbyname(const char *name, SocketAddress *address, nsapi_version_t version);
-    
+
+    /**
+     * Starts the Soft AP mode.
+     *
+     * @return Returns NSAPI_ERROR_OK on success, error otherwise.
+     */
+    int start_soft_ap();
+
+    /**
+     * Stops the Soft AP mode from running.
+     *
+     * @return Returns NSAPI_ERROR_OK on success, error otherwise.
+     */
+    int stop_soft_ap();
+
+    /**
+     * Starts the Soft AP mode.
+     *
+     * @param ssid The name of the AP SSID to use.
+     * @param security (optional) The type of security to use for the connection (default is NONE).
+     * @param pass (optional) The password to use for secure connections (If security is enabled password is minimum of 8 characters).
+     * @param channel (optional) The channel to use for WiFi connections (default is 0).
+     * @param dhcps (optional) Enable the DHCP server for the AP (default is disabled).
+     * @param start_ip (optional) String representation of the starting IPv4 address for DHCP (must be provided if DHCP is enabled).
+     * @param end_ip (optional) String representation of the ending IPv4 address for DHCP (must be provided if DHCP is enabled).
+     * @param lease_time (optional) DHCP lease time for clients when server is enabled (default is 2880 minutes).
+     * @return Returns NSAPI_ERROR_OK on success, failure otherwise.
+     */
+    int start_soft_ap(const char *ssid, nsapi_security_t security = NSAPI_SECURITY_NONE, const char *pass = NULL,
+            uint8_t channel = 0, bool dhcps = false, const char *start_ip = NULL, const char *end_ip = NULL,
+            int lease_time = 2880);
+
+    /**
+     * Set the AP credentials for wireless clients to connect.
+     *
+     * @param ssid The name of the network to connect to.
+     * @param channel (optional) The channel to use (default is 0).
+     * @param security (optional) The type of security to use for connections (default is NONE).
+     * @param pass (optional) The password to use for wireless security (if security is set then password is minimum of 8 characters).
+     * @return Returns 0 on success, -errno otherwise.
+     */
+    int set_ap_credentials(const char *ssid, uint8_t channel = 0, nsapi_security_t security = NSAPI_SECURITY_NONE,
+            const char *pass = NULL);
+
+    /**
+     * Set the AP options for DHCP server.
+     *
+     * @param enable Enable or disable the DHCP server for the AP.
+     * @param start_ip (optional) String representation of the starting IPv4 address for leases.
+     * @param end_ip (optional) String representation of the end IPv4 address for leases.
+     * @param lease_time (optional) The lease time for DHCP clients (default is 2880 minutes).
+     * @return Returns 0 on success, -errno otherwise.
+     */
+    int set_ap_dhcp_options(bool enable, const char *start_ip = NULL, const char *end_ip = NULL, int lease_time = 2880);
+
     /** Set the WiFi network credentials
      *
      *  @param ssid      Name of the network to connect to
@@ -273,10 +327,19 @@ private:
     ESP8266 _esp;
     bool _ids[ESP8266_SOCKET_COUNT];
 
-    char ap_ssid[33]; /* 32 is what 802.11 defines as longest possible name; +1 for the \0 */
-    nsapi_security_t ap_sec;
-    uint8_t ap_ch;
-    char ap_pass[64]; /* The longest allowed passphrase */
+    struct {
+        char ssid[33]; /* 32 is what 802.11 defines as longest possible name; +1 for the \0 */
+        nsapi_security_t sec;
+        uint8_t ch;
+        char pass[64]; /* The longest allowed passphrase */
+    } _sta, _ap;
+
+    struct {
+        bool enable; /* whether the dhcp server is enabled */
+        char start_ip[16]; /* starting IPv4 address */
+        char end_ip[16]; /* ending IPv4 address */
+        int lease_time; /* lease time for dhcp clients */
+    } _dhcps;
 
     void event();
 

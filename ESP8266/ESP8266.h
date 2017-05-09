@@ -133,6 +133,28 @@ public:
     bool dns_lookup(const char *name, char *ip);
 
     /**
+     * Enable/Disable the soft AP mode
+     *
+     * @param ssid The name of SSID for the AP
+     * @param password The password (minimum 8 characters) for secure connections.
+     * @param encryption The type of encryption to use (default is NONE).
+     * @param channel The WiFi channel to use for the AP (default is 0).
+     * @return Returns true on successful execution of the command, false otherwise.
+     */
+    bool softAP(const char *ssid, const char *password, int encryption = 0, int channel = 0);
+
+    /**
+     * Enable the DHCP server.
+     *
+     * @param start_ip String representation of the starting IPv4 address.
+     * @param end_ip String representation of the IPv4 address to stop at.
+     * @param lease_time (optional) Amount of time before a DHCP lease expires (default 2880 minutes).
+     * @param enable (optional) Enable or disable the DHCP server (default is enable).
+     * @return Returns true on successful execution of the command, false otherwise.
+     */
+    bool dhcps(const char *start_ip, const char *end_ip, int lease_time = 2880, bool enable = true);
+
+    /**
     * Open a socketed connection
     *
     * @param type the type of socket to open "UDP" or "TCP"
