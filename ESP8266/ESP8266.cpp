@@ -180,18 +180,6 @@ int ESP8266::scan(WiFiAccessPoint *res, unsigned limit)
     return cnt;
 }
 
-bool ESP8266::softAP(const char *ssid, const char *password, int encryption, int channel)
-{
-    return _parser.send("AT+CWSAP=\"%s\",\"%s\",%d,%d", ssid, password, channel, encryption)
-        && _parser.recv("OK");
-}
-
-bool ESP8266::dhcps(const char *start_ip, const char *end_ip, int lease_time, bool enable)
-{
-    return _parser.send("AT+CWDHCPS_DEF=%d,%d,\"%s\",\"%s\"", enable ? 1 : 0, lease_time, start_ip, end_ip)
-        && _parser.recv("OK");
-}
-
 bool ESP8266::open(const char *type, int id, const char* addr, int port)
 {
     //IDs only 0-4

@@ -74,7 +74,7 @@ int ESP8266Interface::connect()
         return NSAPI_ERROR_DHCP_FAILURE;
     }
 
-    if (!_esp.connect(_sta.ssid, _sta.pass)) {
+    if (!_esp.connect(ap_ssid, ap_pass)) {
         return NSAPI_ERROR_NO_CONNECTION;
     }
 
@@ -108,105 +108,22 @@ nsapi_error_t ESP8266Interface::gethostbyname(const char *name, SocketAddress *a
     return ret;
 }
 
-int ESP8266Interface::start_soft_ap()
-{
-    _esp.setTimeout(ESP8266_CONNECT_TIMEOUT);
-
-    if (!_esp.startup(3)) {
-        return NSAPI_ERROR_DEVICE_ERROR;
-    }
-
-    if (!_esp.dhcp(true, 2)) {
-        return NSAPI_ERROR_DHCP_FAILURE;
-    }
-
-    if (!_esp.softAP(_ap.ssid, _ap.pass, _ap.sec, _ap.ch)) {
-        return NSAPI_ERROR_DEVICE_ERROR;
-    }
-
-    if (!_esp.dhcps(_dhcps.start_ip, _dhcps.end_ip, _dhcps.lease_time, _dhcps.enable)) {
-        return NSAPI_ERROR_DEVICE_ERROR;
-    }
-
-    return NSAPI_ERROR_OK;
-}
-
-int ESP8266Interface::stop_soft_ap()
-{
-    if (!_esp.dhcps(NULL, NULL, 0, false)) {
-        return NSAPI_ERROR_DEVICE_ERROR;
-    }
-
-    return NSAPI_ERROR_OK;
-}
-
-int ESP8266Interface::start_soft_ap(const char *ssid, nsapi_security_t security, const char *pass,
-        uint8_t channel, bool dhcps, const char *start_ip, const char *end_ip, int lease_time)
-
-{
-    set_ap_credentials(ssid, channel, security, pass);
-    set_ap_dhcp_options(dhcps, start_ip, end_ip, lease_time);
-
-    return start_soft_ap();
-}
-
-int ESP8266Interface::set_ap_credentials(const char *ssid, uint8_t channel, nsapi_security_t security,
-        const char *pass)
-{
-    memset(_ap.ssid, 0, sizeof(_ap.ssid));
-    /* XXX: This is wrong, SSID can be all NULL characters. Come back and fix.
-     * Also, not guarantee that ssid is at least size of _ap.ssid
-     */
-    strncpy(_ap.ssid, ssid, sizeof(_ap.ssid));
-
-    memset(_ap.pass, 0, sizeof(_ap.pass));
-    strncpy(_ap.pass, pass, sizeof(_ap.pass));
-
-    _ap.sec = security;
-    _ap.ch = channel;
-
-    return 0;
-}
-
-int ESP8266Interface::set_ap_dhcp_options(bool enable, const char *start_ip, const char *end_ip, int lease_time)
-{
-    if (enable == true &&
-            ((start_ip == NULL || start_ip[0] == '\0') ||
-            (end_ip == NULL || end_ip[0] == '\0')))
-    {
-        return -1;
-    }
-
-    _dhcps.enable = enable;
-
-    memset(_dhcps.start_ip, 0, sizeof(_dhcps.start_ip));
-    strncpy(_dhcps.start_ip, start_ip, sizeof(_dhcps.start_ip));
-
-    memset(_dhcps.end_ip, 0, sizeof(_dhcps.end_ip));
-    strncpy(_dhcps.end_ip, end_ip, sizeof(_dhcps.end_ip));
-
-    _dhcps.lease_time = lease_time;
-
-    return 0;
-}
-
 int ESP8266Interface::set_credentials(const char *ssid, const char *pass, nsapi_security_t security)
 {
-    memset(_sta.ssid, 0, sizeof(_sta.ssid));
-    strncpy(_sta.ssid, ssid, sizeof(_sta.ssid));
+    memset(ap_ssid, 0, sizeof(ap_ssid));
+    strncpy(ap_ssid, ssid, sizeof(ap_ssid));
 
-    memset(_sta.pass, 0, sizeof(_sta.pass));
-    strncpy(_sta.pass, pass, sizeof(_sta.pass));
+    memset(ap_pass, 0, sizeof(ap_pass));
+    strncpy(ap_pass, pass, sizeof(ap_pass));
 
-    _sta.sec = security;
+    ap_sec = security;
 
     return 0;
 }
 
 int ESP8266Interface::set_channel(uint8_t channel)
 {
-    _sta.ch = channel;
-    return NSAPI_ERROR_OK;
+    return NSAPI_ERROR_UNSUPPORTED;
 }
 
 
