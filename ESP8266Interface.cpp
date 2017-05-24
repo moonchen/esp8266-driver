@@ -24,6 +24,8 @@
 #define ESP8266_RECV_TIMEOUT    0
 #define ESP8266_MISC_TIMEOUT    500
 
+#define ESP8266_CONNECT_RETRIES 3
+
 // Firmware version
 #define ESP8266_VERSION 2
 
@@ -50,39 +52,44 @@ int ESP8266Interface::connect(const char *ssid, const char *pass, nsapi_security
 
 int ESP8266Interface::connect()
 {
-    _esp.setTimeout(ESP8266_CONNECT_TIMEOUT);
-    
-    if (!_esp.reset()) {
-        return NSAPI_ERROR_DEVICE_ERROR;
-    }   
- 
-    _esp.setTimeout(ESP8266_MISC_TIMEOUT);
-    
-    if (_esp.get_firmware_version() != ESP8266_VERSION) {
-        debug("ESP8266: ERROR: Firmware incompatible with this driver.\
-               \r\nUpdate to v%d - https://developer.mbed.org/teams/ESP8266/wiki/Firmware-Update\r\n",ESP8266_VERSION); 
-        return NSAPI_ERROR_DEVICE_ERROR;
-    }
-    
-    _esp.setTimeout(ESP8266_CONNECT_TIMEOUT);
+    for (int i = 0; i < ESP8266_CONNECT_RETRIES; i++) {
+        _esp.setTimeout(ESP8266_CONNECT_TIMEOUT);
 
-    if (!_esp.startup(3)) {
-        return NSAPI_ERROR_DEVICE_ERROR;
+        if (!_esp.reset()) {
+            return NSAPI_ERROR_DEVICE_ERROR;
+        }
+
+        _esp.setTimeout(ESP8266_MISC_TIMEOUT);
+
+        if (_esp.get_firmware_version() != ESP8266_VERSION) {
+            debug("ESP8266: ERROR: Firmware incompatible with this driver.\r\n"
+                  "Update to v%d - https://developer.mbed.org/teams/ESP8266/wiki/Firmware-Update\r\n",
+                  ESP8266_VERSION);
+            return NSAPI_ERROR_DEVICE_ERROR;
+        }
+
+        _esp.setTimeout(ESP8266_CONNECT_TIMEOUT);
+
+        if (!_esp.startup(3)) {
+            return NSAPI_ERROR_DEVICE_ERROR;
+        }
+
+        if (!_esp.dhcp(true, 1)) {
+            return NSAPI_ERROR_DHCP_FAILURE;
+        }
+
+        if (!_esp.connect(ap_ssid, ap_pass)) {
+            continue;
+        }
+
+        if (!_esp.getIPAddress()) {
+            return NSAPI_ERROR_DHCP_FAILURE;
+        }
+
+        return NSAPI_ERROR_OK;
     }
 
-    if (!_esp.dhcp(true, 1)) {
-        return NSAPI_ERROR_DHCP_FAILURE;
-    }
-
-    if (!_esp.connect(ap_ssid, ap_pass)) {
-        return NSAPI_ERROR_NO_CONNECTION;
-    }
-
-    if (!_esp.getIPAddress()) {
-        return NSAPI_ERROR_DHCP_FAILURE;
-    }
-
-    return NSAPI_ERROR_OK;
+    return NSAPI_ERROR_NO_CONNECTION;
 }
 
 nsapi_error_t ESP8266Interface::gethostbyname(const char *name, SocketAddress *address, nsapi_version_t version)
