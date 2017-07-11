@@ -61,13 +61,13 @@ int ESP8266Interface::connect()
     if (_esp.get_firmware_version() != ESP8266_VERSION) {
         debug("ESP8266: ERROR: Firmware incompatible with this driver.\
                \r\nUpdate to v%d - https://developer.mbed.org/teams/ESP8266/wiki/Firmware-Update\r\n",ESP8266_VERSION); 
-        return NSAPI_ERROR_DEVICE_ERROR;
+        return NSAPI_ERROR_UNSUPPORTED;
     }
     
     _esp.setTimeout(ESP8266_CONNECT_TIMEOUT);
 
     if (!_esp.startup(3)) {
-        return NSAPI_ERROR_DEVICE_ERROR;
+        return NSAPI_ERROR_PARAMETER;
     }
 
     if (!_esp.dhcp(true, 1)) {
@@ -79,7 +79,7 @@ int ESP8266Interface::connect()
     }
 
     if (!_esp.getIPAddress()) {
-        return NSAPI_ERROR_DHCP_FAILURE;
+        return NSAPI_ERROR_NO_ADDRESS;
     }
 
     return NSAPI_ERROR_OK;

@@ -56,7 +56,7 @@ bool ESP8266::startup(int mode)
 
 bool ESP8266::reset(void)
 {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         if (_parser.send("AT+RST")
             && _parser.recv("OK\r\nready")) {
             return true;
